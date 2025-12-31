@@ -16,11 +16,13 @@ import java.util.regex.Pattern;
         urlPatterns = { "/LoginServlet" },
         initParams = {
                 @WebInitParam(name = "user", value = "Abhi"),
-                @WebInitParam(name = "password", value = "Abhi")
+                @WebInitParam(name = "password", value = "Abhi@bridge1")
         }
 )
 public class LoginServlet extends HttpServlet {
     private static final Pattern NAME_PATTERN = Pattern.compile("^[A-Z]{1}[a-zA-Z\\s]{2,}$");
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -31,8 +33,17 @@ public class LoginServlet extends HttpServlet {
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
 
-        if (!NAME_PATTERN.matcher(user).matches()) {
+        // validating name
+        if (user == null || !NAME_PATTERN.matcher(user).matches()) {
             out.println("<font color=red>Name is Incorrect</font>");
+            RequestDispatcher rd = getServletContext().getRequestDispatcher("/login.html");
+            rd.include(request, response);
+            return;
+        }
+
+        // validating password
+        if (pwd == null || !PASSWORD_PATTERN.matcher(pwd).matches()) {
+            out.println("<font color=red>Weak Password</font>");
             RequestDispatcher rd = getServletContext().getRequestDispatcher("/login.html");
             rd.include(request, response);
             return;
@@ -41,6 +52,7 @@ public class LoginServlet extends HttpServlet {
         String userID = getServletConfig().getInitParameter("user");
         String password = getServletConfig().getInitParameter("password");
 
+        // checking if name and password matches
         if (userID.equals(user) && password.equals(pwd)) {
             request.setAttribute("user", user);
             request.getRequestDispatcher("LoginSuccess.jsp").forward(request, response);
